@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
+</head>
+<body>
+  <main class="page-shell error-shell">
+    <section class="error-card">
+      <span class="status-pill negative">שגיאה</span>
+      <h1>{{ title }}</h1>
+      <p>{{ message }}</p>
+      {% if details %}
+      <div class="error-details">
+        <h2>פירוט</h2>
+        <ul>
+          {% for detail in details %}
+          <li>{{ detail }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+      <p class="note">המערכת אינה מפענחת טקסט חופשי מתוך המסמך. מקור הנתונים היחיד הוא בלוק ה-JSON המובנה.</p>
+    </section>
+  </main>
+</body>
+</html>
+

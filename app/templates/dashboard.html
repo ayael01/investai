@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ ui.title }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
+</head>
+<body>
+  <main class="page-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo-mark"></div>
+        <div>
+          <div class="brand-title">{{ ui.dashboard_title }}</div>
+          <div class="brand-subtitle">{{ ui.subtitle }}</div>
+        </div>
+      </div>
+      <div class="meta-row">
+        <span>{{ report.timezone }}</span>
+        <span>מטבע: {{ report.portfolio_currency }}</span>
+        <span>גרסה {{ report.schema_version }}</span>
+        <a class="refresh-link" href="/refresh{% if request.url.query %}?{{ request.url.query }}{% endif %}">רענון</a>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">{{ ui.eyebrow }}</p>
+          <h1>{{ ui.title }}</h1>
+          <p class="hero-desc">{{ ui.description }}</p>
+          <div class="hero-disclaimer">{{ ui.disclaimer }}</div>
+        </div>
+
+        <aside class="value-card">
+          <div>
+            <div class="value-label">{{ ui.current_value_label }}</div>
+            <div class="portfolio-value">{{ report.summary.current_value_ils | ils }}</div>
+            <div class="loss-line">
+              <span class="loss-chip {{ report.summary.total_pl_ils | signed_class }}">{{ report.summary.total_pl_ils | ils }}</span>
+              <span class="loss-chip {{ report.summary.total_pl_pct | signed_class }}">{{ report.summary.total_pl_pct | percent }}</span>
+            </div>
+          </div>
+          <div class="recommendation-card">
+            <div class="recommendation-title">{{ ui.recommendation_title }}: {{ ui.recommendation_action }}</div>
+            <div class="recommendation-text">{{ ui.recommendation_reason }}</div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="kpi-grid">
+      <article class="kpi-card">
+        <span>{{ ui.starting_value_label }}</span>
+        <strong>{{ report.summary.starting_value_ils | ils }}</strong>
+        <p>בסיס תיק המודל</p>
+      </article>
+      <article class="kpi-card">
+        <span>{{ ui.securities_value_label }}</span>
+        <strong>{{ report.summary.securities_value_ils | ils }}</strong>
+        <p>ללא מזומן פנוי</p>
+      </article>
+      <article class="kpi-card info">
+        <span>{{ ui.cash_label }}</span>
+        <strong>{{ report.summary.cash_ils | ils }}</strong>
+        <p>נזילות זמינה בתיק</p>
+      </article>
+      <article class="kpi-card">
+        <span>{{ ui.total_pl_label }}</span>
+        <strong class="{{ report.summary.total_pl_ils | signed_class }}">{{ report.summary.total_pl_ils | ils }}</strong>
+        <p>מול שווי הפתיחה</p>
+      </article>
+      <article class="kpi-card">
+        <span>{{ ui.total_pl_pct_label }}</span>
+        <strong class="{{ report.summary.total_pl_pct | signed_class }}">{{ report.summary.total_pl_pct | percent }}</strong>
+        <p>אחוז שינוי מצטבר</p>
+      </article>
+    </section>
+
+    <section class="panel">
+      <div class="section-heading">
+        <div>
+          <h2>{{ ui.market_data_title }}</h2>
+          <p class="small-muted">חשוב להבנת איכות החישוב</p>
+        </div>
+        <span class="badge blue">{% if report.market_data.is_realtime %}זמן אמת{% elif report.market_data.is_delayed %}נתונים מושהים{% else %}מידע שוק{% endif %}</span>
+      </div>
+      <div class="source-grid">
+        <div class="source-card">
+          <div class="source-title">מצב מחיר</div>
+          <div class="source-text">{{ ui.market_price_mode }}</div>
+        </div>
+        <div class="source-card">
+          <div class="source-title">מקור המחירים</div>
+          <div class="source-text">{{ ui.market_source }}</div>
+        </div>
+        <div class="source-card warn">
+          <div class="source-title">שער דולר/שקל</div>
+          <div class="source-text">{{ report.market_data.usd_ils | number }}</div>
+        </div>
+      </div>
+      {% if ui.market_notes %}
+      <p class="note">{{ ui.market_notes }}</p>
+      {% endif %}
+    </section>
+
+    <section class="layout">
+      <div class="panel">
+        <div class="section-heading">
+          <div>
+            <h2>{{ ui.summary_title }}</h2>
+            <p class="small-muted">לפי שווי נוכחי מתוך שווי התיק</p>
+          </div>
+        </div>
+        <div class="allocation-list">
+          {% for item in allocations %}
+          <div class="allocation-row">
+            <div class="allocation-name">
+              <strong>{{ item.ticker }}</strong>
+              <span>{{ item.name }} · {{ item.value_ils | ils }}</span>
+            </div>
+            <div class="bar-track">
+              <div class="bar-fill asset-color-{{ loop.index0 % 6 }} {{ item.status | status_class }}" style="width: {{ item.percent }}%"></div>
+            </div>
+            <div class="allocation-percent">{{ item.percent }}%</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <aside class="panel">
+        <div class="section-heading">
+          <h2>{{ ui.thesis_title }}</h2>
+          {% if report.thesis_check.broken_thesis %}
+          <span class="badge red">{{ ui.thesis_status }}</span>
+          {% else %}
+          <span class="badge green">{{ ui.thesis_status }}</span>
+          {% endif %}
+        </div>
+        <div class="insights">
+          {% for note in ui.thesis_notes %}
+          <div class="insight {% if report.thesis_check.broken_thesis %}bad{% else %}good{% endif %}">
+            <h3>{% if loop.first %}{% if report.thesis_check.broken_thesis %}נדרשת תשומת לב{% else %}בדיקה תקינה{% endif %}{% else %}הערת תזה{% endif %}</h3>
+            <p>{{ note }}</p>
+          </div>
+          {% endfor %}
+        </div>
+      </aside>
+    </section>
+
+    <section class="panel table-panel">
+      <div class="table-head">
+        <div>
+          <h2>{{ ui.holdings_title }}</h2>
+          <p class="small-muted">מחיר קנייה, מחיר נוכחי, שינוי, איכות מחיר וסטטוס</p>
+        </div>
+        <div class="badges">
+          <span class="badge {{ report.summary.total_pl_pct | signed_class }}">{{ ui.total_pl_pct_label }}: {{ report.summary.total_pl_pct | percent }}</span>
+          <span class="badge blue">{{ ui.market_price_mode }}</span>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>נייר</th>
+              <th>כמות</th>
+              <th>מחיר קנייה</th>
+              <th>מחיר נוכחי</th>
+              <th>שווי נוכחי</th>
+              <th>שינוי %</th>
+              <th>שינוי כספי</th>
+              <th>איכות מחיר</th>
+              <th>סטטוס</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for holding in report.holdings %}
+            <tr>
+              <td class="asset-cell">
+                <div class="asset-symbol">{{ holding.ticker }}</div>
+                <div class="asset-name">{{ (holding | display_text("display_name")) or (holding | display_text("name")) or holding.ticker }}</div>
+                {% set holding_role = holding | display_text("role") %}
+                {% set holding_note = holding | display_text("note") %}
+                {% if holding_role %}<div class="asset-role">{{ holding_role }}</div>{% endif %}
+                {% if holding_note %}<div class="asset-role">{{ holding_note }}</div>{% endif %}
+              </td>
+              <td class="num">{{ holding.quantity | number }}</td>
+              <td class="num">{{ holding.purchase_price | price(holding.currency) }}</td>
+              <td class="num">{{ holding.current_price | price(holding.currency) }}</td>
+              <td class="num strong">{{ holding.current_value_ils | ils }}</td>
+              <td class="num {{ holding.pl_pct | signed_class }}">{{ holding.pl_pct | percent }}</td>
+              <td class="num {{ holding.pl_ils | signed_class }}">{{ holding.pl_ils | ils }}</td>
+              <td><span class="risk risk-mid">{{ holding | display_text("price_confidence") }}</span></td>
+              <td><span class="status {{ holding.status | status_class }}">{{ holding | display_text("status") }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="layout">
+      <div class="panel">
+        <div class="section-heading">
+          <h2>{{ ui.recommendation_title }}</h2>
+          <span class="badge {{ report.recommendation.action | status_class }}">{{ ui.recommendation_action }}</span>
+        </div>
+        <div class="insight info">
+          <h3>סיכום פעולה</h3>
+          <p>{{ ui.recommendation_reason }}</p>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="section-heading">
+          <h2>{{ ui.actions_today_title }}</h2>
+        </div>
+        {% if ui.actions_today %}
+        <div class="insights">
+          {% for action in ui.actions_today %}
+          <div class="insight info"><p>{{ (action | display_text("text")) or (action | display_text("action")) or action }}</p></div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="today-action"><strong>פעולות היום:</strong> לא בוצעה פעולה וירטואלית חדשה.</div>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="panel table-panel">
+      <div class="table-head">
+        <div>
+          <h2>{{ ui.transactions_title }}</h2>
+          <p class="small-muted">פעולות מתוך בלוק ה-JSON המובנה במסמך</p>
+        </div>
+        <span class="badge green">{{ report.transactions | length }} פעולות</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>תאריך</th>
+              <th>פעולה</th>
+              <th>נייר</th>
+              <th>כמות</th>
+              <th>שער ביצוע</th>
+              <th>סכום בש"ח</th>
+              <th>סיבה</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for transaction in report.transactions %}
+            <tr>
+              <td>{{ transaction.date | date_il }}</td>
+              <td><span class="status {{ transaction.action | status_class }}">{{ transaction | display_text("action") }}</span></td>
+              <td class="ltr strong">{{ transaction.ticker }}</td>
+              <td class="num">{{ transaction.quantity | number }}</td>
+              <td class="num">{{ transaction.execution_price | price(transaction.currency) }}</td>
+              <td class="num">{{ transaction.amount_ils | ils }}</td>
+              <td>{{ transaction | display_text("reason", "-") }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    {% if report.operational_status %}
+    {% set operational_notes = report.operational_status | display_text("notes") %}
+    {% if operational_notes %}
+    <section class="panel">
+      <div class="section-heading">
+        <h2>סטטוס תפעולי</h2>
+      </div>
+      <p class="note">{{ operational_notes }}</p>
+    </section>
+    {% endif %}
+    {% endif %}
+
+    <footer class="footer">
+      {{ ui.disclaimer }}
+    </footer>
+  </main>
+</body>
+</html>
