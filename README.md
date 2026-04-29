@@ -80,3 +80,39 @@ pytest
 ## Security Notes
 
 Do not commit Google service-account credentials. Keep `GOOGLE_APPLICATION_CREDENTIALS` pointed at a local JSON file or a secret-managed runtime path.
+
+## Render Deployment
+
+Use Render when you want a public URL that works while your laptop is closed.
+
+1. Push the project to GitHub.
+2. In Render, create a new Web Service from the GitHub repository.
+3. Use Python as the runtime.
+4. Build command:
+
+```bash
+pip install -r requirements.txt
+```
+
+5. Start command:
+
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
+
+6. Add environment variables:
+
+```env
+GOOGLE_DOC_ID=1evbfnd7Pe_9MWXA6px54LdAXceJGawCswGyXqaPxvxE
+GOOGLE_APPLICATION_CREDENTIALS_JSON_BASE64=<base64 encoded service-account JSON>
+DASHBOARD_ACCESS_TOKEN=<choose a long random token>
+CACHE_TTL_SECONDS=300
+```
+
+To create the base64 value locally:
+
+```bash
+base64 -i /path/to/service-account.json
+```
+
+Copy the single output string into Render as `GOOGLE_APPLICATION_CREDENTIALS_JSON_BASE64`. Do not commit the JSON file or the base64 value.

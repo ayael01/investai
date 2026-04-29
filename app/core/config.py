@@ -16,6 +16,8 @@ class Settings:
     google_application_credentials: str | None = os.getenv(
         "GOOGLE_APPLICATION_CREDENTIALS"
     )
+    google_application_credentials_json_base64: str | None = os.getenv(
+        "GOOGLE_APPLICATION_CREDENTIALS_JSON_BASE64"
+    )
     dashboard_access_token: str | None = os.getenv("DASHBOARD_ACCESS_TOKEN") or None
     cache_ttl_seconds: int = int(os.getenv("CACHE_TTL_SECONDS", "300"))
-

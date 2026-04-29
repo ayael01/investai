@@ -159,6 +159,7 @@ def load_report(force: bool = False) -> PortfolioReport:
     text = fetch_google_doc_text(
         settings.google_doc_id,
         settings.google_application_credentials,
+        settings.google_application_credentials_json_base64,
     )
     data = extract_machine_readable_json(text)
     report = validate_report(data)
@@ -200,6 +201,17 @@ def render_error(
 
 def google_docs_error_details(exc: GoogleDocsReadError) -> list[str]:
     message = str(exc)
+    if "credentials are not configured" in message:
+        return [
+            "לא הוגדרו פרטי התחברות לחשבון השירות של Google.",
+            "בסביבה מקומית יש להגדיר GOOGLE_APPLICATION_CREDENTIALS לקובץ JSON.",
+            "בסביבת Render יש להגדיר GOOGLE_APPLICATION_CREDENTIALS_JSON_BASE64.",
+        ]
+    if "GOOGLE_APPLICATION_CREDENTIALS_JSON_BASE64" in message:
+        return [
+            "משתנה GOOGLE_APPLICATION_CREDENTIALS_JSON_BASE64 אינו תקין.",
+            "יש לוודא שהוא מכיל קובץ service account JSON לאחר קידוד base64.",
+        ]
     if "GOOGLE_APPLICATION_CREDENTIALS" in message:
         if "file does not exist" in message:
             return [
