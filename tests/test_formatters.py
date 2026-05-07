@@ -85,6 +85,85 @@ def test_dashboard_renders_hebrew_html(monkeypatch, valid_report_data):
     assert response.status_code == 200
     assert 'lang="he" dir="rtl"' in response.text
     assert "דוח תיק מודל וירטואלי" in response.text
+    assert "תאריך ושעת הפקת הדוח:" in response.text
+    assert "29.04.2026 12:19 שעון ישראל" in response.text
+
+
+def test_dashboard_prefers_display_generated_at_he(monkeypatch, valid_report_data):
+    valid_report_data["display"] = {
+        "generated_at_he": "07.05.2026 22:00 שעון ישראל"
+    }
+    valid_report_data["market_data"]["timestamp_he"] = "06.05.2026 21:00 שעון ישראל"
+    report = validate_report(valid_report_data)
+    monkeypatch.setattr(
+        main,
+        "settings",
+        SimpleNamespace(
+            dashboard_access_token=None,
+            google_doc_id="doc",
+            google_application_credentials=None,
+            cache_ttl_seconds=300,
+        ),
+    )
+    monkeypatch.setattr(main, "load_report", lambda force=False: report)
+    main.cache.clear()
+    client = TestClient(main.app)
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert "תאריך ושעת הפקת הדוח:" in response.text
+    assert "07.05.2026 22:00 שעון ישראל" in response.text
+    assert "06.05.2026 21:00 שעון ישראל" not in response.text
+
+
+def test_dashboard_uses_market_timestamp_he_fallback(monkeypatch, valid_report_data):
+    valid_report_data.pop("generated_at")
+    valid_report_data["market_data"]["timestamp_he"] = "07.05.2026 22:00 שעון ישראל"
+    report = validate_report(valid_report_data)
+    monkeypatch.setattr(
+        main,
+        "settings",
+        SimpleNamespace(
+            dashboard_access_token=None,
+            google_doc_id="doc",
+            google_application_credentials=None,
+            cache_ttl_seconds=300,
+        ),
+    )
+    monkeypatch.setattr(main, "load_report", lambda force=False: report)
+    main.cache.clear()
+    client = TestClient(main.app)
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert "תאריך ושעת הפקת הדוח:" in response.text
+    assert "07.05.2026 22:00 שעון ישראל" in response.text
+
+
+def test_dashboard_hides_generation_time_when_missing(monkeypatch, valid_report_data):
+    valid_report_data.pop("generated_at")
+    valid_report_data["market_data"].pop("timestamp")
+    report = validate_report(valid_report_data)
+    monkeypatch.setattr(
+        main,
+        "settings",
+        SimpleNamespace(
+            dashboard_access_token=None,
+            google_doc_id="doc",
+            google_application_credentials=None,
+            cache_ttl_seconds=300,
+        ),
+    )
+    monkeypatch.setattr(main, "load_report", lambda force=False: report)
+    main.cache.clear()
+    client = TestClient(main.app)
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert "תאריך ושעת הפקת הדוח:" not in response.text
 
 
 def test_dashboard_prefers_hebrew_display_fields(monkeypatch, valid_report_data):

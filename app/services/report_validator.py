@@ -12,7 +12,7 @@ class MarketData(FlexibleModel):
     prices_available: bool
     price_mode: str
     source: str
-    timestamp: datetime
+    timestamp: datetime | None = None
     is_realtime: bool
     is_delayed: bool
     usd_ils: float | None = None
@@ -78,7 +78,7 @@ class OperationalStatus(FlexibleModel):
 class PortfolioReport(FlexibleModel):
     schema_version: str
     report_type: Literal["virtual_portfolio_daily_report"] | str
-    generated_at: datetime
+    generated_at: datetime | None = None
     timezone: str
     portfolio_currency: str
     market_data: MarketData
@@ -93,4 +93,3 @@ class PortfolioReport(FlexibleModel):
 
 def validate_report(data: dict[str, Any]) -> PortfolioReport:
     return PortfolioReport.model_validate(data)
-

@@ -29,6 +29,12 @@
         <div class="hero-copy">
           <p class="eyebrow">{{ ui.eyebrow }}</p>
           <h1>{{ ui.title }}</h1>
+          {% if ui.report_generated_at %}
+          <div class="generated-at">
+            <span>תאריך ושעת הפקת הדוח:</span>
+            <strong>{{ ui.report_generated_at }}</strong>
+          </div>
+          {% endif %}
           <p class="hero-desc">{{ ui.description }}</p>
           <div class="hero-disclaimer">{{ ui.disclaimer }}</div>
         </div>

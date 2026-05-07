@@ -153,6 +153,26 @@ h3 {
   font-size: 15px;
 }
 
+.generated-at {
+  margin-top: 14px;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  padding: 9px 12px;
+  border-radius: 999px;
+  background: rgba(219, 234, 254, 0.13);
+  border: 1px solid rgba(191, 219, 254, 0.24);
+  color: #bfdbfe;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.generated-at strong {
+  color: #eff6ff;
+  font-weight: 950;
+}
+
 .hero-disclaimer {
   margin-top: 18px;
   display: inline-flex;

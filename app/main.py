@@ -54,6 +54,36 @@ templates.env.filters["status_class"] = status_class
 templates.env.globals["display_list"] = display_list
 
 
+def read_optional_field(obj: object, field: str) -> object:
+    if obj is None:
+        return None
+    if isinstance(obj, dict):
+        return obj.get(field)
+    return getattr(obj, field, None)
+
+
+def format_report_generated_at(value: object) -> str:
+    if value is None:
+        return ""
+    try:
+        formatted_value = format_datetime_il(value)
+    except (TypeError, ValueError):
+        return str(value)
+    return f"{formatted_value.replace(' | ', ' ')} שעון ישראל"
+
+
+def get_report_generated_at_display(report: PortfolioReport) -> str:
+    display = getattr(report, "display", None)
+    market_data = getattr(report, "market_data", None)
+    value = (
+        read_optional_field(display, "generated_at_he")
+        or read_optional_field(market_data, "timestamp_he")
+        or read_optional_field(report, "generated_at")
+        or read_optional_field(market_data, "timestamp")
+    )
+    return format_report_generated_at(value)
+
+
 def require_access_token(request: Request) -> None:
     if not settings.dashboard_access_token:
         return
@@ -101,6 +131,7 @@ def build_ui_text(report: PortfolioReport) -> dict[str, Any]:
             "description",
             "תצוגת דשבורד לתיק המודל: שווי כולל, רווח/הפסד, איכות נתוני שוק, חלוקת אחזקות, בדיקת תזה ויומן פעולות.",
         ),
+        "report_generated_at": get_report_generated_at_display(report),
         "disclaimer": display_text(display, "disclaimer")
         or display_text(
             report,
